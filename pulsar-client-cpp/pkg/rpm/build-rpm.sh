@@ -20,7 +20,6 @@
 
 set -e
 
-cd /pulsar
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd $ROOT_DIR/pulsar-client-cpp/pkg/rpm
 

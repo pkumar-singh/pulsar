@@ -1,0 +1,440 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+before_script:
+  - eval $(ssh-agent -s)
+  - git config user.name "Streamlio CI"
+  - git config user.email "ssg-streamlio@splunk.com"
+  - ulimit -c unlimited
+  - export MAVEN_OPTS="-Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=yyyy-MM-dd'T'HH:mm:ss.SSSZ -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO"
+
+cache:
+  paths:
+    - /root/.m2/repository
+
+variables:
+  BUILD_IMAGE_BASE: "docker-hub.repo.splunkdev.net/apachepulsar/pulsar-build"
+  BUILD_IMAGE_DEFAULT: "docker-hub.repo.splunkdev.net/apachepulsar/pulsar-build:latest"
+  DOCKER_IMAGE: "docker-hub.repo.splunkdev.net/aahmedse/maven"
+  DOCKER_TAG: "3.6.1-jdk-8-dind"
+  PYPI_URL: "https://repo.splunk.com/artifactory/api/pypi/pypi"
+  PLAYGROUND_DOCKER_REGISTRY: cloudrepo-docker-playground.jfrog.io
+  PRODUCTION_DOCKER_REGISTRY: cloudrepo-docker.jfrog.io
+  PLAYGROUND_DOCKER_PATH: docker:v1/play/prefix/maas
+  PRODUCTION_DOCKER_PATH: docker:v1/prod/prefix/maas
+
+stages:
+  - deploy-manual
+  - ci
+  - deploy
+
+
+# == Python Build Job Start
+
+release_pypi_manylinux3.7:
+  image: $BUILD_IMAGE_BASE:manylinux-cp37-cp37m
+  stage: deploy-manual
+  cache: {}
+  script:
+    - export USE_FULL_POM_NAME=True
+    - cd pulsar-client-cpp
+    - cmake . -DPYTHON_INCLUDE_DIR=/opt/python/cp37-cp37m/include/python3.7 -DPYTHON_LIBRARY=/opt/python/cp37-cp37m/lib -DLINK_STATIC=ON -DBUILD_TESTS=OFF
+    - make -j8 _pulsar
+    - cd python
+    - python3 setup.py bdist_wheel
+    - auditwheel repair dist/pulsar_client-*-$PYTHON_SPEC-linux_x86_64.whl
+    - twine upload --verbose --skip-existing --repository-url "${PYPI_URL}" dist/*.whl -u "${STREAMLIO_ARTIFACTORY_USERNAME}" -p "${STREAMLIO_ARTIFACTORY_PASSWORD}"
+  when: manual
+
+# == Python Build Job End
+
+tag_release:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: deploy
+  only:
+    - /^branch-.*-streamlio$/
+  script:
+    - build/splunk-tag-release.sh
+
+ci_unit_exclude_broker_proxy:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - timeout 170m mvn -B -ntp -Pcore-modules,brokerSkipTest package -Dexclude='org/apache/pulsar/proxy/**/*.java' -DtestForkCount=1 -DtestReuseFork=false
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_proxy:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - timeout 170m mvn -B -ntp -Pcore-modules package -Dinclude='org/apache/pulsar/proxy/**/*.java' -DtestForkCount=1 -DtestReuseFork=false
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_broker_other:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - mvn -B -ntp -q -Pcore-modules install -DskipTests
+    - dev/ci_unit_broker_other.sh
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_broker_bk_group1:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - mvn -B -ntp -q -Pcore-modules install -DskipTests
+    - dev/ci_unit_broker_bk_group1.sh
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_broker_bk_group2:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - mvn -B -ntp -q -Pcore-modules install -DskipTests
+    - dev/ci_unit_broker_bk_group2.sh
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_broker_client_api:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - mvn -B -ntp -q -Pcore-modules install -DskipTests
+    - timeout 170m mvn -B test -pl pulsar-broker -Dinclude='org/apache/pulsar/client/api/**/*.java' -DtestForkCount=1 -DtestReuseFork=false
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_unit_broker_client_impl:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - dev/monitor-mvn &
+    - mvn -B -ntp -q -Pcore-modules install -DskipTests
+    - timeout 170m mvn -B test -pl pulsar-broker -Dinclude='org/apache/pulsar/client/impl/**/*.java' -DtestForkCount=1 -DtestReuseFork=false
+  after_script:
+    - date
+    - tar zcf test-results.tgz */target/surefire-reports/
+    - echo "[START_TEST_SUMMARY]"
+    - build/testsummary.py */target/surefire-reports/TEST-*.xml
+    - echo "[END_TEST_SUMMARY]"
+    - build/testtrim.py $(find . -name 'TEST*.xml')
+  artifacts:
+    paths:
+      - test-results.tgz
+      - process-debug.log
+    expire_in: 100 days
+    when: always
+    reports:
+      junit:
+        - "*/target/surefire-reports/TEST-*.xml"
+
+ci_cpp:
+  image: $BUILD_IMAGE_DEFAULT
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - mvn -B -ntp -q -pl distribution/server package -am -DskipTests
+    - /bin/bash -c "cd pulsar-client-cpp && cmake . -DCMAKE_BUILD_TYPE=Debug && make check-format && make -j8"
+    - /bin/bash -c "cd pulsar-client-cpp && ./run-unit-tests.sh"
+  after_script:
+    - cp -r /tmp/pulsar-test-dist/logs broker-logs
+    - cp /tmp/*core* .
+  artifacts:
+    paths:
+      - broker-logs/
+      - "pulsar-client-cpp/tests/main"
+      - "pulsar-client-cpp/tests/*core*"
+      - "pulsar-client-cpp/lib/libpulsar.so.*"
+      - "pulsar-client-cpp/lib/libpulsar.so"
+      - "pulsar-client-cpp/python/_pulsar.so"
+      - "*core*"
+    expire_in: 100 days
+    when: always
+
+ci_integration:
+  image: $DOCKER_IMAGE:$DOCKER_TAG
+  stage: ci
+  timeout: 180 mins
+  only:
+    - merge_requests
+  script:
+    - docker pull quay.io/testcontainers/ryuk:0.2.3
+    - mvn -B -ntp -q install -DskipTests
+    - mvn -B -ntp install -pl tests/docker-images/java-test-functions -DskipTests -DintegrationTests
+    - dev/build_integration_docker.sh
+    - dev/monitor-mvn &
+    - timeout 170m mvn -B -ntp -pl tests/integration test -DintegrationTestSuiteFile=pulsar-thread.xml -DintegrationTests -DredirectTestOutputToFile=false -Dgroups=java_function
+
+release_artifacts:
+  image: $DOCKER_IMAGE:$DOCKER_TAG
+  stage: deploy
+  timeout: 60 mins
+  only:
+    - /^release-.*$/
+  script:
+    - mvn -B -ntp install -DskipTests -DperformRelease=true
+    - ./release_maven.sh
+
+release_alpine_apk:
+  image: $BUILD_IMAGE_BASE:alpine-3.11
+  stage: deploy
+  cache: {}
+  only:
+    - /^release-.*$/
+  script:
+    - ./pulsar-client-cpp/pkg/apk/build-apk.sh
+    - VERSION=$(python3 src/get-project-version.py | sed -E 's/-[a-z]+-/./' | sed -E 's/.[A-Z]+././')
+    - URL=https://repo.splunk.com/artifactory/maven-splunk/com/splunk/pulsar/pulsar-client-alpine
+    - CREDENTIALS="-u $STREAMLIO_ARTIFACTORY_USERNAME:$STREAMLIO_ARTIFACTORY_PASSWORD"
+    - DIST_DIR=./pulsar-client-cpp/pkg/apk/pkg/x86_64/
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-${VERSION}-r0.apk "${URL}/${VERSION}/x86_64/apache-pulsar-client-${VERSION}-r0.apk"
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-dev-${VERSION}-r0.apk "${URL}/${VERSION}/x86_64/apache-pulsar-client-dev-${VERSION}-r0.apk"
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/APKINDEX.tar.gz "${URL}/${VERSION}/x86_64/APKINDEX.tar.gz"
+
+release_alpine38_apk:
+  image: $BUILD_IMAGE_BASE:alpine-3.8
+  stage: deploy
+  cache: {}
+  only:
+    - /^release-.*$/
+  script:
+    - ./pulsar-client-cpp/pkg/apk/build-apk.sh
+    - VERSION=$(python3 src/get-project-version.py | sed -E 's/-[a-z]+-/./' | sed -E 's/.[A-Z]+././')
+    - URL=https://repo.splunk.com/artifactory/maven-splunk/com/splunk/pulsar/pulsar-client-alpine-3.8
+    - CREDENTIALS="-u $STREAMLIO_ARTIFACTORY_USERNAME:$STREAMLIO_ARTIFACTORY_PASSWORD"
+    - DIST_DIR=./pulsar-client-cpp/pkg/apk/pkg/x86_64/
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-${VERSION}-r0.apk "${URL}/${VERSION}/x86_64/apache-pulsar-client-${VERSION}-r0.apk"
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-dev-${VERSION}-r0.apk "${URL}/${VERSION}/x86_64/apache-pulsar-client-dev-${VERSION}-r0.apk"
+    - curl ${CREDENTIALS} --upload-file ${DIST_DIR}/APKINDEX.tar.gz "${URL}/${VERSION}/x86_64/APKINDEX.tar.gz"
+
+release_alpine_python_wheel:
+  image: $BUILD_IMAGE_BASE:alpine-3.11
+  stage: deploy
+  cache: {}
+  only:
+    - /^release-.*$/
+  script:
+    - export USE_FULL_POM_NAME=True
+    - export NAME_POSTFIX='-alpine'
+    - ./pulsar-client-cpp/docker/alpine/build-wheel-file-within-docker.sh
+    - twine upload --verbose --skip-existing --repository-url "${PYPI_URL}" ./pulsar-client-cpp/python/dist/*.whl -u "${STREAMLIO_ARTIFACTORY_USERNAME}" -p "${STREAMLIO_ARTIFACTORY_PASSWORD}"
+
+release_alpine38_python_wheel:
+  image: $BUILD_IMAGE_BASE:alpine-3.8
+  stage: deploy
+  cache: {}
+  only:
+    - /^release-.*$/
+  script:
+    - export USE_FULL_POM_NAME=True
+    - export NAME_POSTFIX='-alpine'
+    - export PYTHON_INCLUDE_DIR=/usr/include/python3.6m
+    - export PYTHON_LIBRARY=/usr/lib/python3.6
+    - ./pulsar-client-cpp/docker/alpine/build-wheel-file-within-docker.sh
+    - twine upload --verbose --skip-existing --repository-url "${PYPI_URL}" ./pulsar-client-cpp/python/dist/*.whl -u "${STREAMLIO_ARTIFACTORY_USERNAME}" -p "${STREAMLIO_ARTIFACTORY_PASSWORD}"
+
+release_rpm:
+  image: $BUILD_IMAGE_BASE:centos-7
+  stage: deploy
+  cache: {}
+  only:
+   - /^release-.*$/
+  script:
+    - VERSION=$(python src/get-project-version.py)
+    - yum -y install java-1.8.0-openjdk-devel wget curl
+    - export JAVA_HOME=/usr/lib/jvm/java-1.8.0/
+    - wget http://mirror.cogentco.com/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+    - tar xvfz apache-maven-3.6.3-bin.tar.gz
+    - apache-maven-3.6.3/bin/mvn install -DskipTests -Pcore-modules
+    - ./pulsar-client-cpp/pkg/rpm/build-rpm.sh
+    - URL=https://repo.splunk.com/artifactory/maven-splunk/com/splunk/pulsar/pulsar-client-rpm/${VERSION}
+    - CREDENTIALS="-u $STREAMLIO_ARTIFACTORY_USERNAME:$STREAMLIO_ARTIFACTORY_PASSWORD"
+    - DIST_DIR=pulsar-client-cpp/pkg/rpm/RPMS/x86_64
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-${VERSION}-1.x86_64.rpm"
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-devel-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-devel-${VERSION}-1.x86_64.rpm"
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-debuginfo-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-debuginfo-${VERSION}-1.x86_64.rpm"
+
+release_rpm_rhel6:
+  image: $BUILD_IMAGE_BASE:centos-6
+  stage: deploy
+  cache: {}
+  only:
+   - /^release-.*$/
+  script:
+    - VERSION=$(python src/get-project-version.py)
+    - yum -y install java-1.8.0-openjdk-devel wget curl
+    - export JAVA_HOME=/usr/lib/jvm/java-1.8.0/
+    - wget http://mirror.cogentco.com/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+    - tar xvfz apache-maven-3.6.3-bin.tar.gz
+    - apache-maven-3.6.3/bin/mvn install -DskipTests -Pcore-modules
+    - ./pulsar-client-cpp/pkg/rpm/build-rpm.sh
+    - URL=https://repo.splunk.com/artifactory/maven-splunk/com/splunk/pulsar/pulsar-client-rpm-rhel6/${VERSION}
+    - CREDENTIALS="-u $STREAMLIO_ARTIFACTORY_USERNAME:$STREAMLIO_ARTIFACTORY_PASSWORD"
+    - DIST_DIR=pulsar-client-cpp/pkg/rpm/RPMS/x86_64
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-${VERSION}.el6-1.x86_64.rpm"
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-devel-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-devel-${VERSION}.el6-1.x86_64.rpm"
+    - /usr/bin/curl ${CREDENTIALS} --upload-file ${DIST_DIR}/apache-pulsar-client-debuginfo-${VERSION}-1.x86_64.rpm "${URL}/apache-pulsar-client-debuginfo-${VERSION}.el6-1.x86_64.rpm"
+
+
+include:
+  - project: 'prodsec/whitesource'
+    ref: latest
+    file: '/templates/.whitesource.yml'
+  - project: 'prodsec/scp-scanning/gitlab-checkmarx'
+    ref: latest
+    file: '/templates/.sast_scan.yml'
+
+whitesource:
+  extends: .whitesource
+  stage: ci
+  variables:
+    ws_user_key: ${WHITESOURCE_USER_KEY}
+    product_id: ${WHITESOURCE_ID}
+    config: java-maven
+  only:
+    refs:
+      - /^branch-.*-streamlio$/
+
+sast-scanner:
+  extends: .sast_scan
+  stage: ci
+  timeout: 120 mins
+  variables:
+    CX_PROJECT_ID: 10535
+    TRANSPILE_JSX: 1
+  only:
+    refs:
+      - /^branch-.*-streamlio$/
