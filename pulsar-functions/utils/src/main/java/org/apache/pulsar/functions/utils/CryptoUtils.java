@@ -34,7 +34,7 @@ import org.apache.pulsar.common.functions.CryptoConfig;
 import org.apache.pulsar.common.util.ClassLoaderUtils;
 import org.apache.pulsar.functions.proto.Function;
 
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public final class CryptoUtils {
 

@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
+import org.apache.bookkeeper.bookie.BookieResources;
 import org.apache.bookkeeper.bookie.BookieException.InvalidCookieException;
 import org.apache.bookkeeper.bookie.storage.ldb.DbLedgerStorage;
 import org.apache.bookkeeper.clients.StorageClientBuilder;
@@ -55,7 +56,6 @@ import org.apache.bookkeeper.common.concurrent.FutureUtils;
 import org.apache.bookkeeper.common.util.Backoff;
 import org.apache.bookkeeper.common.util.Backoff.Jitter.Type;
 import org.apache.bookkeeper.conf.ServerConfiguration;
-import org.apache.bookkeeper.discover.BookieServiceInfo;
 import org.apache.bookkeeper.proto.BookieServer;
 import org.apache.bookkeeper.server.conf.BookieConfiguration;
 import org.apache.bookkeeper.stats.NullStatsLogger;
@@ -299,7 +299,9 @@ public class LocalBookkeeperEnsemble {
             bsConfs[i].setAllowEphemeralPorts(true);
 
             try {
-                bs[i] = new BookieServer(bsConfs[i], NullStatsLogger.INSTANCE, BookieServiceInfo.NO_INFO);
+                bs[i] = new BookieServer(bsConfs[i],
+                        BookieResources.createMetadataDriver(bsConfs[i], NullStatsLogger.INSTANCE),
+                        NullStatsLogger.INSTANCE);
             } catch (InvalidCookieException e) {
                 // InvalidCookieException can happen if the machine IP has changed
                 // Since we are running here a local bookie that is always accessed
@@ -312,7 +314,9 @@ public class LocalBookkeeperEnsemble {
                 new File(new File(bkDataDir, "current"), "VERSION").delete();
 
                 // Retry to start the bookie after cleaning the old left cookie
-                bs[i] = new BookieServer(bsConfs[i], NullStatsLogger.INSTANCE, BookieServiceInfo.NO_INFO);
+                bs[i] = new BookieServer(bsConfs[i],
+                        BookieResources.createMetadataDriver(bsConfs[i], NullStatsLogger.INSTANCE),
+                        NullStatsLogger.INSTANCE);
             }
             bs[i].start();
             LOG.debug("Local BK[{}] started (port: {}, data_directory: {})", i, bookiePort,
@@ -446,7 +450,9 @@ public class LocalBookkeeperEnsemble {
 
     public void startBK(int i) throws Exception {
         try {
-            bs[i] = new BookieServer(bsConfs[i], NullStatsLogger.INSTANCE, BookieServiceInfo.NO_INFO);
+            bs[i] = new BookieServer(bsConfs[i],
+                    BookieResources.createMetadataDriver(bsConfs[i], NullStatsLogger.INSTANCE),
+                    NullStatsLogger.INSTANCE);
         } catch (InvalidCookieException e) {
             // InvalidCookieException can happen if the machine IP has changed
             // Since we are running here a local bookie that is always accessed
@@ -455,14 +461,11 @@ public class LocalBookkeeperEnsemble {
                 zkc.delete("/ledgers/cookies/" + path, -1);
             }
 
-            // Also clean the on-disk cookie
-            new File(new File(bsConfs[i].getJournalDirNames()[0], "current"), "VERSION").delete();
-
             // Retry to start the bookie after cleaning the old left cookie
-            bs[i] = new BookieServer(bsConfs[i], NullStatsLogger.INSTANCE, BookieServiceInfo.NO_INFO);
-
+            bs[i] = new BookieServer(bsConfs[i],
+                    BookieResources.createMetadataDriver(bsConfs[i], NullStatsLogger.INSTANCE),
+                    NullStatsLogger.INSTANCE);
         }
-        bs[i].start();
     }
 
     public void startBK() throws Exception {

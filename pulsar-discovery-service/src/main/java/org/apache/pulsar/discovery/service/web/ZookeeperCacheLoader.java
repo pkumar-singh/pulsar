@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.bookkeeper.common.util.OrderedScheduler;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.pulsar.common.util.FutureUtil;
 import org.apache.pulsar.common.util.ObjectMapperFactory;
 import org.apache.pulsar.policies.data.loadbalancer.LoadManagerReport;
@@ -125,7 +124,7 @@ public class ZookeeperCacheLoader implements Closeable {
     }
 
     public List<LoadManagerReport> getAvailableBrokers() {
-        if (CollectionUtils.isEmpty(availableBrokers)) {
+        if (availableBrokers == null || availableBrokers.isEmpty()) {
             try {
                 updateBrokerList(availableBrokersCache.get());
             } catch (Exception e) {
