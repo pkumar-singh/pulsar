@@ -31,6 +31,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -195,6 +196,8 @@ public class PulsarService implements AutoCloseable {
     private ProtocolHandlers protocolHandlers = null;
 
     private final ShutdownService shutdownService;
+
+    private final List<PulsarPlugin> plugins = new ArrayList<>();
 
     private MetricsGenerator metricsGenerator;
 
@@ -378,6 +381,10 @@ public class PulsarService implements AutoCloseable {
                 transactionBufferClient.close();
             }
 
+            for (PulsarPlugin p : plugins) {
+                p.close();
+            }
+
             state = State.Closed;
             isClosedCondition.signalAll();
         } catch (Exception e) {
@@ -557,6 +564,8 @@ public class PulsarService implements AutoCloseable {
                 LOG.debug("Attempting to add static directory");
             }
             this.webService.addStaticResources("/static", "/static");
+
+            this.loadPlugins();
 
             webService.start();
 
@@ -1352,5 +1361,22 @@ public class PulsarService implements AutoCloseable {
                 brokerConfig.getFunctionsWorkerServiceNarPackage());
         }
         return workerConfig;
+    }
+
+    private void loadPlugins() throws Exception {
+        try {
+            for (String className : config.getPulsarPlugins()) {
+                if (className.isEmpty()) {
+                    continue;
+                }
+
+                PulsarPlugin plugin = (PulsarPlugin) Class.forName(className).newInstance();
+                plugin.initialize(this);
+                plugins.add(plugin);
+                LOG.info("Loaded plugin from {}", className);
+            }
+        } catch (Throwable e) {
+            throw new PulsarServerException("Failed to load an plugin: " + e.getMessage(), e);
+        }
     }
 }

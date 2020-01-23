@@ -2115,4 +2115,6 @@ public class ServiceConfiguration implements PulsarConfiguration {
             return brokerDeleteInactiveTopicsMaxInactiveDurationSeconds;
         }
     }
+
+    private List<String> pulsarPlugins = new ArrayList<>();
 }
