@@ -136,7 +136,7 @@ TEST(AuthPluginTest, testTlsDetectPulsarSsl) {
     ASSERT_EQ(ResultOk, result);
 }
 
-TEST(AuthPluginTest, testTlsDetectPulsarSslWithHostNameValidation) {
+TEST(AuthPluginTest, DISABLED_testTlsDetectPulsarSslWithHostNameValidation) {  // PLSR-231
     ClientConfiguration config = ClientConfiguration();
     config.setTlsTrustCertsFilePath(caPath);
     config.setTlsAllowInsecureConnection(false);
@@ -224,7 +224,7 @@ void mockZTS(int port) {
 }
 }  // namespace testAthenz
 
-TEST(AuthPluginTest, testAthenz) {
+TEST(AuthPluginTest, DISABLED_testAthenz) {  // PLSR-234
     std::thread zts(std::bind(&testAthenz::mockZTS, 9999));
     pulsar::AuthenticationDataPtr data;
     std::string params = R"({
@@ -294,7 +294,7 @@ TEST(AuthPluginTest, testAuthFactoryTls) {
     ASSERT_EQ(ResultOk, result);
 }
 
-TEST(AuthPluginTest, testAuthFactoryAthenz) {
+TEST(AuthPluginTest, DISABLED_testAuthFactoryAthenz) {  // PLSR-233
     std::thread zts(std::bind(&testAthenz::mockZTS, 9998));
     pulsar::AuthenticationDataPtr data;
     std::string params = R"({

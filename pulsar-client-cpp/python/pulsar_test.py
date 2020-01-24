@@ -19,7 +19,7 @@
 #
 
 
-from unittest import TestCase, main
+from unittest import TestCase, main, skip
 import time
 import os
 import uuid
@@ -288,6 +288,7 @@ class PulsarTest(TestCase):
         consumer.unsubscribe()
         client.close()
 
+    @skip("PLSR-228")
     def test_tls_auth(self):
         certs_dir = '/pulsar/pulsar-broker/src/test/resources/authentication/tls/'
         if not os.path.exists(certs_dir):
@@ -315,6 +316,7 @@ class PulsarTest(TestCase):
 
         client.close()
 
+    @skip("PLSR-228")
     def test_tls_auth2(self):
         certs_dir = '/pulsar/pulsar-broker/src/test/resources/authentication/tls/'
         if not os.path.exists(certs_dir):
@@ -345,6 +347,7 @@ class PulsarTest(TestCase):
 
         client.close()
 
+    @skip("PLSR-228")
     def test_tls_auth3(self):
         certs_dir = '/pulsar/pulsar-broker/src/test/resources/authentication/tls/'
         if not os.path.exists(certs_dir):
