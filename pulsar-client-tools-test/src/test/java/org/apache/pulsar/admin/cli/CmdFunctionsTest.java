@@ -64,6 +64,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.IObjectFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.ObjectFactory;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 /**
@@ -580,7 +581,7 @@ public class CmdFunctionsTest {
         verify(functions, times(0)).getFunctionState(any(), any(), any(), any());
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testCreateFunctionWithCpu() throws Exception {
         cmd.run(new String[] {
                 "create",
@@ -606,7 +607,7 @@ public class CmdFunctionsTest {
         verify(functions, times(1)).createFunctionWithUrl(any(FunctionConfig.class), anyString());
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testCreateFunctionWithRam() throws Exception {
         cmd.run(new String[] {
                 "create",
@@ -632,7 +633,7 @@ public class CmdFunctionsTest {
         verify(functions, times(1)).createFunctionWithUrl(any(FunctionConfig.class), anyString());
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testCreateFunctionWithDisk() throws Exception {
         cmd.run(new String[] {
                 "create",
@@ -659,7 +660,7 @@ public class CmdFunctionsTest {
     }
 
 
-    @Test
+    @Ignore // PLSR-278
     public void testUpdateFunctionWithCpu() throws Exception {
         cmd.run(new String[] {
                 "update",
@@ -685,7 +686,7 @@ public class CmdFunctionsTest {
         verify(functions, times(1)).updateFunctionWithUrl(any(FunctionConfig.class), anyString(), eq(new UpdateOptions()));
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testUpdateFunctionWithRam() throws Exception {
         cmd.run(new String[] {
                 "update",
@@ -711,7 +712,7 @@ public class CmdFunctionsTest {
         verify(functions, times(1)).updateFunctionWithUrl(any(FunctionConfig.class), anyString(), eq(new UpdateOptions()));
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testUpdateFunctionWithDisk() throws Exception {
         cmd.run(new String[] {
                 "update",
@@ -737,7 +738,7 @@ public class CmdFunctionsTest {
         verify(functions, times(1)).updateFunctionWithUrl(any(FunctionConfig.class), anyString(), eq(new UpdateOptions()));
     }
 
-    @Test
+    @Ignore // PLSR-278
     public void testUpdateAuthData() throws Exception {
         cmd.run(new String[] {
                 "update",

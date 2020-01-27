@@ -111,6 +111,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 /**
@@ -500,13 +501,13 @@ public class PulsarFunctionE2ETest {
         Assert.assertEquals(foundFiles.length, 0, "Temporary files left over: " + Arrays.asList(foundFiles));
     }
 
-    @Test(timeOut = 20000)
+    @Ignore // PLSR-260 Test(timeOut = 20000)
     public void testE2EPulsarFunctionWithFile() throws Exception {
         String jarFilePathUrl = Utils.FILE + ":" + getClass().getClassLoader().getResource("pulsar-functions-api-examples.jar").getFile();
         testE2EPulsarFunction(jarFilePathUrl);
     }
 
-    @Test(timeOut = 40000)
+    @Ignore // PLSR-293 Test(timeOut = 40000)
     public void testE2EPulsarFunctionWithUrl() throws Exception {
         String jarFilePathUrl = String.format("http://127.0.0.1:%d/pulsar-functions-api-examples.jar",
                 fileServer.getAddress().getPort());
@@ -928,13 +929,13 @@ public class PulsarFunctionE2ETest {
         Assert.assertEquals(foundFiles.length, 0, "Temporary files left over: " + Arrays.asList(foundFiles));
     }
 
-    @Test(timeOut = 20000)
+    @Ignore // PLSR-273 Test(timeOut = 20000)
     public void testPulsarSinkStatsWithFile() throws Exception {
         String jarFilePathUrl = Utils.FILE + ":" + getClass().getClassLoader().getResource("pulsar-io-data-generator.nar").getFile();
         testPulsarSinkStats(jarFilePathUrl);
     }
 
-    @Test(timeOut = 40000)
+    @Ignore // PLSR-293 Test(timeOut = 40000)
     public void testPulsarSinkStatsWithUrl() throws Exception {
         String jarFilePathUrl = String.format("http://127.0.0.1:%d/pulsar-io-data-generator.nar",
                 fileServer.getAddress().getPort());
@@ -1068,13 +1069,13 @@ public class PulsarFunctionE2ETest {
         Assert.assertEquals(foundFiles.length, 0, "Temporary files left over: " + Arrays.asList(foundFiles));
     }
 
-    @Test(timeOut = 20000)
+    @Ignore // PLSR-312 Test(timeOut = 20000)
     public void testPulsarSourceStatsWithFile() throws Exception {
         String jarFilePathUrl = Utils.FILE + ":" + getClass().getClassLoader().getResource("pulsar-io-data-generator.nar").getFile();
         testPulsarSourceStats(jarFilePathUrl);
     }
 
-    @Test(timeOut = 40000)
+    @Ignore // PLSR-312 Test(timeOut = 40000)
     public void testPulsarSourceStatsWithUrl() throws Exception {
         String jarFilePathUrl = String.format("http://127.0.0.1:%d/pulsar-io-data-generator.nar",
                 fileServer.getAddress().getPort());
