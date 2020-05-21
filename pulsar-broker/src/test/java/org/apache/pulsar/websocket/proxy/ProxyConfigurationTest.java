@@ -36,6 +36,10 @@ import org.testng.annotations.Test;
 public class ProxyConfigurationTest extends ProducerConsumerBase {
     private WebSocketProxyConfiguration config;
 
+    public ProxyConfigurationTest() throws Exception {
+        super();
+    }
+
     @BeforeMethod
     public void setup() throws Exception {
         super.internalSetup();

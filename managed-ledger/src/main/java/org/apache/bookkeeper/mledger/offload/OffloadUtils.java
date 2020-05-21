@@ -36,7 +36,7 @@ import org.apache.bookkeeper.mledger.proto.MLDataFormats.KeyValue;
 import org.apache.bookkeeper.mledger.proto.MLDataFormats.ManagedLedgerInfo.LedgerInfo;
 import org.apache.bookkeeper.mledger.proto.MLDataFormats.OffloadContext;
 import org.apache.bookkeeper.mledger.proto.MLDataFormats.OffloadDriverMetadata;
-import org.apache.bookkeeper.net.BookieId;
+import org.apache.bookkeeper.net.BookieSocketAddress;
 import org.apache.bookkeeper.proto.DataFormats;
 
 @Slf4j
@@ -120,11 +120,11 @@ public final class OffloadUtils {
                     .setKey(e.getKey()).setValue(ByteString.copyFrom(e.getValue()));
         }
 
-        for (Map.Entry<Long, ? extends List<BookieId>> e : metadata.getAllEnsembles().entrySet()) {
-            builder.addSegmentBuilder()
-                    .setFirstEntryId(e.getKey())
-                    .addAllEnsembleMember(e.getValue().stream().map(BookieId::toString).collect(Collectors.toList()));
-        }
+//        for (Map.Entry<Long, ? extends List<BookieId>> e : metadata.getAllEnsembles().entrySet()) {
+//            builder.addSegmentBuilder()
+//                    .setFirstEntryId(e.getKey())
+//                    .addAllEnsembleMember(e.getValue().stream().map(BookieId::toString).collect(Collectors.toList()));
+//        }
 
         return builder.build().toByteArray();
     }
@@ -135,24 +135,24 @@ public final class OffloadUtils {
                 .withLastEntryId(ledgerMetadataFormat.getLastEntryId())
                 .withPassword(ledgerMetadataFormat.getPassword().toByteArray())
                 .withClosedState()
-                .withId(id)
+//                .withId(id)
                 .withMetadataFormatVersion(2)
                 .withLength(ledgerMetadataFormat.getLength())
                 .withAckQuorumSize(ledgerMetadataFormat.getAckQuorumSize())
                 .withCreationTime(ledgerMetadataFormat.getCtime())
                 .withWriteQuorumSize(ledgerMetadataFormat.getQuorumSize())
                 .withEnsembleSize(ledgerMetadataFormat.getEnsembleSize());
-        ledgerMetadataFormat.getSegmentList().forEach(segment -> {
-            ArrayList<BookieId> addressArrayList = new ArrayList<>();
-            segment.getEnsembleMemberList().forEach(address -> {
-                try {
-                    addressArrayList.add(BookieId.parse(address));
-                } catch (IllegalArgumentException e) {
-                    log.error("Exception when create BookieId {}. ", address, e);
-                }
-            });
-            builder.newEnsembleEntry(segment.getFirstEntryId(), addressArrayList);
-        });
+//        ledgerMetadataFormat.getSegmentList().forEach(segment -> {
+//            ArrayList<BookieId> addressArrayList = new ArrayList<>();
+//            segment.getEnsembleMemberList().forEach(address -> {
+//                try {
+//                    addressArrayList.add(BookieId.parse(address));
+//                } catch (IllegalArgumentException e) {
+//                    log.error("Exception when create BookieId {}. ", address, e);
+//                }
+//            });
+//            builder.newEnsembleEntry(segment.getFirstEntryId(), addressArrayList);
+//        });
 
         if (ledgerMetadataFormat.getCustomMetadataCount() > 0) {
             Map<String, byte[]> customMetadata = Maps.newHashMap();

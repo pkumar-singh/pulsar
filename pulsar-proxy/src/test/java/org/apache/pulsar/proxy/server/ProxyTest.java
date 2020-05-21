@@ -91,7 +91,7 @@ public class ProxyTest extends MockedPulsarServiceBaseTest {
     protected void setup() throws Exception {
         internalSetup();
 
-        proxyConfig.setServicePort(Optional.ofNullable(0));
+        proxyConfig.setServicePort(Optional.of(0));
         proxyConfig.setZookeeperServers(DUMMY_VALUE);
         proxyConfig.setConfigurationStoreServers(DUMMY_VALUE);
 

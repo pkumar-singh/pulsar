@@ -46,7 +46,6 @@ import org.apache.zookeeper.KeeperException;
  */
 @Slf4j
 public class BookKeeperPackagesStorage implements PackagesStorage {
-
     private final static String NS_CLIENT_ID = "packages-management";
     final BookKeeperPackagesStorageConfiguration configuration;
     private Namespace namespace;
@@ -128,9 +127,9 @@ public class BookKeeperPackagesStorage implements PackagesStorage {
     @Override
     public CompletableFuture<Void> deleteAsync(String path) {
         return namespace.getNamespaceDriver().getLogMetadataStore().getLogLocation(path)
-            .thenCompose(uri -> uri.map(value -> namespace.getNamespaceDriver()
+            .thenCompose(uri -> uri.transform(value -> namespace.getNamespaceDriver()
                 .getLogStreamMetadataStore(NamespaceDriver.Role.WRITER).deleteLog(value, path))
-                .orElse(null));
+                .orNull());
     }
 
 

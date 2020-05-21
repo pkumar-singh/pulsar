@@ -21,6 +21,8 @@ package org.apache.pulsar.client.api;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
+import com.google.common.collect.Sets;
+
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,8 +49,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.Sets;
 
 public class AuthenticatedProducerConsumerTest extends ProducerConsumerBase {
     private static final Logger log = LoggerFactory.getLogger(AuthenticatedProducerConsumerTest.class);

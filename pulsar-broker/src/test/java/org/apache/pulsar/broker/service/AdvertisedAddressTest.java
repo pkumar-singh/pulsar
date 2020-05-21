@@ -47,10 +47,10 @@ public class AdvertisedAddressTest {
 
         ServiceConfiguration config = new ServiceConfiguration();
         config.setZookeeperServers("127.0.0.1" + ":" + bkEnsemble.getZookeeperPort());
-        config.setWebServicePort(Optional.ofNullable(0));
+        config.setWebServicePort(Optional.of(0));
         config.setClusterName("usc");
         config.setAdvertisedAddress("localhost");
-        config.setBrokerServicePort(Optional.ofNullable(0));
+        config.setBrokerServicePort(Optional.of(0));
         config.setAdvertisedAddress(advertisedAddress);
         config.setManagedLedgerMaxEntriesPerLedger(5);
         config.setManagedLedgerMinLedgerRolloverTimeMinutes(0);

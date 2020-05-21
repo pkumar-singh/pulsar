@@ -128,7 +128,7 @@ public class BookKeeperClientFactoryImpl implements BookKeeperClientFactory {
             bkConf.setBookieErrorThresholdPerInterval(conf.getBookkeeperClientHealthCheckErrorThresholdPerInterval());
             bkConf.setBookieQuarantineTime((int) conf.getBookkeeperClientHealthCheckQuarantineTimeInSeconds(),
                     TimeUnit.SECONDS);
-            bkConf.setBookieQuarantineRatio(conf.getBookkeeperClientQuarantineRatio());
+//            bkConf.setBookieQuarantineRatio(conf.getBookkeeperClientQuarantineRatio());
         }
 
         bkConf.setReorderReadSequenceEnabled(conf.isBookkeeperClientReorderReadSequenceEnabled());

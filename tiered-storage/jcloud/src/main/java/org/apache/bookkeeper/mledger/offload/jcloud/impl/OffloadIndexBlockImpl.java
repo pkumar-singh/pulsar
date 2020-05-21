@@ -37,7 +37,7 @@ import org.apache.bookkeeper.client.api.DigestType;
 import org.apache.bookkeeper.client.api.LedgerMetadata;
 import org.apache.bookkeeper.mledger.offload.jcloud.OffloadIndexBlock;
 import org.apache.bookkeeper.mledger.offload.jcloud.OffloadIndexEntry;
-import org.apache.bookkeeper.net.BookieId;
+import org.apache.bookkeeper.net.BookieSocketAddress;
 import org.apache.bookkeeper.proto.DataFormats;
 import org.apache.bookkeeper.proto.DataFormats.LedgerMetadataFormat;
 import org.apache.pulsar.common.allocator.PulsarByteBufAllocator;
@@ -182,8 +182,8 @@ public class OffloadIndexBlockImpl implements OffloadIndexBlock {
         private long ctime;
         private State state;
         private Map<String, byte[]> customMetadata = Maps.newHashMap();
-        private TreeMap<Long, ArrayList<BookieId>> ensembles =
-                new TreeMap<>();
+        private TreeMap<Long, ArrayList<BookieSocketAddress>> ensembles =
+                new TreeMap<Long, ArrayList<BookieSocketAddress>>();
 
         InternalLedgerMetadata(LedgerMetadataFormat ledgerMetadataFormat) {
             this.ensembleSize = ledgerMetadataFormat.getEnsembleSize();
@@ -202,11 +202,11 @@ public class OffloadIndexBlockImpl implements OffloadIndexBlock {
             }
 
             ledgerMetadataFormat.getSegmentList().forEach(segment -> {
-                ArrayList<BookieId> addressArrayList = new ArrayList<>();
+                ArrayList<BookieSocketAddress> addressArrayList = new ArrayList<>();
                 segment.getEnsembleMemberList().forEach(address -> {
                     try {
-                        addressArrayList.add(BookieId.parse(address));
-                    } catch (IllegalArgumentException e) {
+                        addressArrayList.add(new BookieSocketAddress(address));
+                    } catch (Exception e) {
                         log.error("Exception when create BookieSocketAddress. ", e);
                     }
                 });
@@ -214,10 +214,10 @@ public class OffloadIndexBlockImpl implements OffloadIndexBlock {
             });
         }
 
-        @Override
-        public long getLedgerId() {
-            throw new UnsupportedOperationException();
-        }
+//        @Override
+//        public long getLedgerId() {
+//            throw new UnsupportedOperationException();
+//        }
 
         @Override
         public int getEnsembleSize() {
@@ -276,12 +276,12 @@ public class OffloadIndexBlockImpl implements OffloadIndexBlock {
         }
 
         @Override
-        public List<BookieId> getEnsembleAt(long entryId) {
+        public List<BookieSocketAddress> getEnsembleAt(long entryId) {
             return ensembles.get(ensembles.headMap(entryId + 1).lastKey());
         }
 
         @Override
-        public NavigableMap<Long, ? extends List<BookieId>> getAllEnsembles() {
+        public NavigableMap<Long, ? extends List<BookieSocketAddress>> getAllEnsembles() {
             return this.ensembles;
         }
 
@@ -367,4 +367,3 @@ public class OffloadIndexBlockImpl implements OffloadIndexBlock {
     }
 
 }
-

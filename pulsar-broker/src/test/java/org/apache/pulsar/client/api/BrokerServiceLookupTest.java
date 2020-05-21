@@ -537,8 +537,8 @@ public class BrokerServiceLookupTest extends ProducerConsumerBase {
         final String TLS_CLIENT_KEY_FILE_PATH = "./src/test/resources/certificate/client.key";
 
         // (1) restart broker1 with tls enabled
-        conf.setBrokerServicePortTls(Optional.ofNullable(0));
-        conf.setWebServicePortTls(Optional.ofNullable(0));
+        conf.setBrokerServicePortTls(Optional.of(0));
+        conf.setWebServicePortTls(Optional.of(0));
         conf.setTlsAllowInsecureConnection(true);
         conf.setTlsCertificateFilePath(TLS_SERVER_CERT_FILE_PATH);
         conf.setTlsKeyFilePath(TLS_SERVER_KEY_FILE_PATH);

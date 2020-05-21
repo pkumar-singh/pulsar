@@ -20,6 +20,7 @@ package org.apache.pulsar.broker.stats.prometheus.metrics;
 
 import com.google.common.base.Joiner;
 import io.prometheus.client.Collector;
+import java.util.Collections;
 import org.apache.bookkeeper.stats.Counter;
 import org.apache.bookkeeper.stats.Gauge;
 import org.apache.bookkeeper.stats.OpStatsLogger;
@@ -46,7 +47,7 @@ public class PrometheusStatsLogger implements StatsLogger {
 
     @Override
     public Counter getCounter(String name) {
-        return provider.counters.computeIfAbsent(completeName(name), x -> new LongAdderCounter());
+        return provider.counters.computeIfAbsent(completeName(name), x -> new LongAdderCounter(Collections.emptyMap()));
     }
 
     @Override

@@ -221,7 +221,7 @@ public abstract class MockedPulsarServiceBaseTest {
             }
             bkExecutor = null;
         }
-        
+
     }
 
     protected abstract void setup() throws Exception;

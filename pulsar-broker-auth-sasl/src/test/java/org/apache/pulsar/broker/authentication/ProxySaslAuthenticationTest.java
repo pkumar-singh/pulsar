@@ -58,7 +58,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Ignore;
-import org.testng.annotations.Test;
 
 public class ProxySaslAuthenticationTest extends ProducerConsumerBase {
 	private static final Logger log = LoggerFactory.getLogger(ProxySaslAuthenticationTest.class);

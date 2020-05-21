@@ -26,16 +26,26 @@ package org.apache.pulsar.packages.management.storage.bookkeeper.bookkeeper.test
 import io.netty.buffer.ByteBufAllocator;
 import org.apache.bookkeeper.bookie.Bookie;
 import org.apache.bookkeeper.bookie.BookieException;
+import org.apache.bookkeeper.bookie.BookieImpl;
+import org.apache.bookkeeper.bookie.BookieResources;
+import org.apache.bookkeeper.bookie.LedgerDirsManager;
+import org.apache.bookkeeper.bookie.LedgerStorage;
+import org.apache.bookkeeper.bookie.ReadOnlyBookie;
 import org.apache.bookkeeper.bookie.storage.ldb.DbLedgerStorage;
 import org.apache.bookkeeper.client.BookKeeperTestClient;
 import org.apache.bookkeeper.common.allocator.PoolingPolicy;
 import org.apache.bookkeeper.conf.AbstractConfiguration;
 import org.apache.bookkeeper.conf.ClientConfiguration;
 import org.apache.bookkeeper.conf.ServerConfiguration;
+import org.apache.bookkeeper.discover.RegistrationManager;
+import org.apache.bookkeeper.meta.LedgerManager;
+import org.apache.bookkeeper.meta.MetadataBookieDriver;
 import org.apache.bookkeeper.metastore.InMemoryMetaStore;
 import org.apache.bookkeeper.net.BookieSocketAddress;
 import org.apache.bookkeeper.proto.BookieServer;
 import org.apache.bookkeeper.replication.AutoRecoveryMain;
+import org.apache.bookkeeper.stats.NullStatsLogger;
+import org.apache.bookkeeper.util.DiskChecker;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -413,7 +423,34 @@ public abstract class BookKeeperClusterTestCase {
      *
      */
     protected BookieServer startBookie(ServerConfiguration conf) throws Exception {
-        BookieServer server = new BookieServer(conf);
+        final MetadataBookieDriver metadataBookieDriver =
+                BookieResources.createMetadataDriver(conf, NullStatsLogger.INSTANCE);
+
+        final RegistrationManager registrationManager = metadataBookieDriver.createRegistrationManager();
+
+        final LedgerManager ledgerManager = metadataBookieDriver.getLedgerManagerFactory().newLedgerManager();
+        final ByteBufAllocator allocator = BookieResources.createAllocator(conf);
+
+        final DiskChecker diskChecker = BookieResources.createDiskChecker(conf);
+        LedgerDirsManager ledgerDirsManager = BookieResources.createLedgerDirsManager(
+                conf, diskChecker, NullStatsLogger.INSTANCE);
+        LedgerDirsManager indexDirsManager = BookieResources.createIndexDirsManager(
+                conf, diskChecker,  NullStatsLogger.INSTANCE, ledgerDirsManager);
+
+        LedgerStorage storage = BookieResources.createLedgerStorage(
+                conf, ledgerManager, ledgerDirsManager, indexDirsManager, NullStatsLogger.INSTANCE, allocator);
+
+        final Bookie bookie = conf.isForceReadOnlyBookie()
+                ? new ReadOnlyBookie(conf, registrationManager, storage,
+                    diskChecker,
+                    ledgerDirsManager, indexDirsManager,
+                    NullStatsLogger.INSTANCE, allocator)
+                : new BookieImpl(conf, registrationManager, storage,
+                    diskChecker,
+                    ledgerDirsManager, indexDirsManager,
+                    NullStatsLogger.INSTANCE, allocator);
+
+        BookieServer server = new BookieServer(conf, bookie, NullStatsLogger.INSTANCE, allocator);
         bsConfs.add(conf);
         bs.add(server);
 
@@ -432,30 +469,6 @@ public abstract class BookKeeperClusterTestCase {
         bkc.readBookiesBlocking();
         LOG.info("New bookie on port " + port + " has been created.");
 
-        return server;
-    }
-
-    /**
-     * Start a bookie with the given bookie instance. Also, starts the auto recovery for this bookie, if
-     * isAutoRecoveryEnabled is true.
-     */
-    protected BookieServer startBookie(ServerConfiguration conf, final Bookie b) throws Exception {
-        BookieServer server = new BookieServer(conf) {
-            protected Bookie newBookie(ServerConfiguration conf, ByteBufAllocator allocator)
-                    throws IOException, KeeperException, InterruptedException, BookieException {
-                return b;
-            }
-        };
-        server.start();
-
-        int port = conf.getBookiePort();
-        while (bkc.getZkHandle().exists(
-                "/ledgers/available/" + InetAddress.getLocalHost().getHostAddress() + ":" + port, false) == null) {
-            Thread.sleep(500);
-        }
-
-        bkc.readBookiesBlocking();
-        LOG.info("New bookie on port " + port + " has been created.");
         return server;
     }
 

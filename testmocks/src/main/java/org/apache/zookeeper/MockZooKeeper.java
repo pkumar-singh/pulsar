@@ -67,7 +67,7 @@ public class MockZooKeeper extends ZooKeeper {
     private int readOpDelayMs;
 
     private ReentrantLock mutex;
-    
+
     //see details of Objenesis caching - http://objenesis.org/details.html
     //see supported jvms - https://github.com/easymock/objenesis/blob/master/SupportedJVMs.md
     private static final Objenesis objenesis = new ObjenesisStd();
@@ -206,7 +206,7 @@ public class MockZooKeeper extends ZooKeeper {
 
     @Override
     public void create(final String path, final byte[] data, final List<ACL> acl, CreateMode createMode,
-            final StringCallback cb, final Object ctx) {
+                       final StringCallback cb, final Object ctx) {
 
 
         executor.execute(() -> {
@@ -248,13 +248,13 @@ public class MockZooKeeper extends ZooKeeper {
                 toNotifyCreate.forEach(
                         watcher -> watcher.process(
                                 new WatchedEvent(EventType.NodeCreated,
-                                                 KeeperState.SyncConnected,
-                                                 path)));
+                                        KeeperState.SyncConnected,
+                                        path)));
                 toNotifyParent.forEach(
                         watcher -> watcher.process(
                                 new WatchedEvent(EventType.NodeChildrenChanged,
-                                                 KeeperState.SyncConnected,
-                                                 parent)));
+                                        KeeperState.SyncConnected,
+                                        parent)));
             }
         });
 

@@ -43,7 +43,6 @@ import org.apache.bookkeeper.client.api.ReadHandle;
 import org.apache.bookkeeper.client.api.WriteFlag;
 import org.apache.bookkeeper.client.impl.LedgerEntryImpl;
 import org.apache.bookkeeper.common.concurrent.FutureUtils;
-import org.apache.bookkeeper.net.BookieId;
 import org.apache.bookkeeper.net.BookieSocketAddress;
 import org.apache.bookkeeper.versioning.LongVersion;
 import org.apache.bookkeeper.versioning.Versioned;
@@ -255,14 +254,14 @@ public class PulsarMockLedgerHandle extends LedgerHandle {
     }
 
     private static LedgerMetadata createMetadata(long id, DigestType digest, byte[] passwd) {
-        List<BookieId> ensemble = Lists.newArrayList(
-                new BookieSocketAddress("192.0.2.1", 1234).toBookieId(),
-                new BookieSocketAddress("192.0.2.2", 1234).toBookieId(),
-                new BookieSocketAddress("192.0.2.3", 1234).toBookieId());
+        List<BookieSocketAddress> ensemble = Lists.newArrayList(
+                new BookieSocketAddress("192.0.2.1", 1234),
+                new BookieSocketAddress("192.0.2.2", 1234),
+                new BookieSocketAddress("192.0.2.3", 1234));
         return LedgerMetadataBuilder.create()
             .withDigestType(digest.toApiDigestType())
             .withPassword(passwd)
-            .withId(id)
+//            .withId(id)
             .newEnsembleEntry(0L, ensemble)
             .build();
     }

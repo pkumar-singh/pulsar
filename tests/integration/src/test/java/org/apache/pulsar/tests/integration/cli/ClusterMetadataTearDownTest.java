@@ -91,7 +91,7 @@ public class ClusterMetadataTearDownTest {
         configStoreZk = PulsarClusterMetadataTeardown.initZk(pulsarCluster.getCSConnString(), sessionTimeoutMs);
 
         driver = MetadataDrivers.getBookieDriver(URI.create(metadataServiceUri));
-        driver.initialize(new ServerConfiguration().setMetadataServiceUri(metadataServiceUri), () -> {}, NullStatsLogger.INSTANCE);
+        driver.initialize(new ServerConfiguration().setMetadataServiceUri(metadataServiceUri), NullStatsLogger.INSTANCE);
         ledgerManager = driver.getLedgerManagerFactory().newLedgerManager();
 
         client = PulsarClient.builder().serviceUrl(pulsarCluster.getPlainTextServiceUrl()).build();

@@ -39,7 +39,6 @@ import org.apache.bookkeeper.client.api.LedgerMetadata;
 import org.apache.bookkeeper.mledger.offload.jcloud.OffloadIndexBlock;
 import org.apache.bookkeeper.mledger.offload.jcloud.OffloadIndexBlockBuilder;
 import org.apache.bookkeeper.mledger.offload.jcloud.OffloadIndexEntry;
-import org.apache.bookkeeper.net.BookieId;
 import org.apache.bookkeeper.net.BookieSocketAddress;
 import org.testng.annotations.Test;
 
@@ -88,15 +87,15 @@ public class OffloadIndexTest {
         metadataCustom.put("key1", "value1".getBytes(UTF_8));
         metadataCustom.put("key7", "value7".getBytes(UTF_8));
 
-        ArrayList<BookieId> bookies = Lists.newArrayList();
-        bookies.add(0, new BookieSocketAddress("127.0.0.1:3181").toBookieId());
-        bookies.add(1, new BookieSocketAddress("127.0.0.2:3181").toBookieId());
-        bookies.add(2, new BookieSocketAddress("127.0.0.3:3181").toBookieId());
-        
+        ArrayList<BookieSocketAddress> bookies = Lists.newArrayList();
+        bookies.add(0, new BookieSocketAddress("127.0.0.1:3181"));
+        bookies.add(1, new BookieSocketAddress("127.0.0.2:3181"));
+        bookies.add(2, new BookieSocketAddress("127.0.0.3:3181"));
+
         return LedgerMetadataBuilder.create().withEnsembleSize(3).withWriteQuorumSize(3).withAckQuorumSize(2)
                 .withDigestType(DigestType.CRC32C).withPassword("password".getBytes(UTF_8))
                 .withCustomMetadata(metadataCustom).withClosedState().withLastEntryId(5000).withLength(100)
-                .newEnsembleEntry(0L, bookies).withId(id).build();
+                .newEnsembleEntry(0L, bookies).build();
 
     }
 

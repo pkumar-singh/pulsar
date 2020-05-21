@@ -33,6 +33,11 @@
     <name>Apache Pulsar :: Package Management :: BookKeeper Storage</name>
 
     <dependencies>
+       <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+       </dependency>
+    
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>pulsar-package-core</artifactId>
@@ -48,6 +53,22 @@
                     <artifactId>lz4</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.distributedlog</groupId>
+            <artifactId>distributedlog-protocol</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.distributedlog</groupId>
+            <artifactId>distributedlog-common</artifactId>
         </dependency>
 
         <dependency>
