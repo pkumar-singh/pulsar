@@ -96,7 +96,7 @@ flexible messaging model and an intuitive client API.</description>
     <commons-compress.version>1.19</commons-compress.version>
 
     <bookkeeper.version>4.11.0.SPLK.10278328</bookkeeper.version>
-    <zookeeper.version>3.5.7</zookeeper.version>
+    <zookeeper.version>3.5.9-streamlio-1</zookeeper.version>
     <netty.version>4.1.51.Final</netty.version>
     <netty-tc-native.version>2.0.33.Final</netty-tc-native.version>
     <jetty.version>9.4.35.v20201120</jetty.version>
