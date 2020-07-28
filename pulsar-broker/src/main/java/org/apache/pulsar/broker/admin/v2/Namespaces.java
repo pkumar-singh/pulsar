@@ -67,6 +67,7 @@ import org.apache.pulsar.common.policies.data.SchemaAutoUpdateCompatibilityStrat
 import org.apache.pulsar.common.policies.data.SchemaCompatibilityStrategy;
 import org.apache.pulsar.common.policies.data.SubscribeRate;
 import org.apache.pulsar.common.policies.data.SubscriptionAuthMode;
+import org.apache.pulsar.common.policies.data.TopicLifecyclePolicies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -751,6 +752,21 @@ public class Namespaces extends NamespacesBase {
             @PathParam("namespace") String namespace) {
         validateNamespaceName(tenant, namespace);
         return internalGetPersistence();
+    }
+
+    @POST
+    @Path("/{tenant}/{namespace}/topicLifecycle")
+    @ApiOperation(value = "Set the topic lifecycle configuration for all the topics on a namespace.")
+    @ApiResponses(value = { @ApiResponse(code = 403, message = "Don't have admin permission"),
+            @ApiResponse(code = 404, message = "Namespace does not exist"),
+            @ApiResponse(code = 409, message = "Concurrent modification"),
+            @ApiResponse(code = 400, message = "Invalid persistence policies") })
+    public void setTopicsLifeCycle(
+            @Suspended final AsyncResponse asyncResponse,
+            @PathParam("tenant") String tenant, @PathParam("namespace") String namespace,
+            TopicLifecyclePolicies lifecyclePolicies) {
+        validateNamespaceName(tenant, namespace);
+        internalSetTopicLifecycle(asyncResponse, lifecyclePolicies);
     }
 
     @POST

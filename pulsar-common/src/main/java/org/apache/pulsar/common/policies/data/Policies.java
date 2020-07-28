@@ -75,6 +75,9 @@ public class Policies {
     public DelayedDeliveryPolicies delayed_delivery_policies = null;
     @SuppressWarnings("checkstyle:MemberName")
     public InactiveTopicPolicies inactive_topic_policies = null;
+
+    public TopicLifecyclePolicies topicLifecycle = null;
+
     @SuppressWarnings("checkstyle:MemberName")
     public SubscriptionAuthMode subscription_auth_mode = SubscriptionAuthMode.None;
 

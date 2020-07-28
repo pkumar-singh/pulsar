@@ -78,6 +78,7 @@ import org.apache.pulsar.common.policies.data.BundlesData;
 import org.apache.pulsar.common.policies.data.ClusterData;
 import org.apache.pulsar.common.policies.data.DelayedDeliveryPolicies;
 import org.apache.pulsar.common.policies.data.DispatchRate;
+import org.apache.pulsar.common.policies.data.InactiveTopicDeleteMode;
 import org.apache.pulsar.common.policies.data.InactiveTopicPolicies;
 import org.apache.pulsar.common.policies.data.LocalPolicies;
 import org.apache.pulsar.common.policies.data.NamespaceOperation;
@@ -93,6 +94,7 @@ import org.apache.pulsar.common.policies.data.SchemaCompatibilityStrategy;
 import org.apache.pulsar.common.policies.data.SubscribeRate;
 import org.apache.pulsar.common.policies.data.SubscriptionAuthMode;
 import org.apache.pulsar.common.policies.data.TenantOperation;
+import org.apache.pulsar.common.policies.data.TopicLifecyclePolicies;
 import org.apache.pulsar.common.util.FutureUtil;
 import org.apache.pulsar.common.util.ObjectMapperFactory;
 import org.apache.zookeeper.KeeperException;
@@ -1920,6 +1922,22 @@ public abstract class NamespacesBase extends AdminResource {
         } else {
             return policies.persistence;
         }
+    }
+
+    protected void internalSetTopicLifecycle(AsyncResponse asyncResponse, TopicLifecyclePolicies lifecyclePolicies) {
+
+        InactiveTopicPolicies itp = new InactiveTopicPolicies(InactiveTopicDeleteMode.delete_when_no_subscriptions, 0,
+                lifecyclePolicies.isAutoDeleteTopics());
+        try {
+            internalSetInactiveTopic(itp);
+        } catch (Throwable t) {
+            asyncResponse.resume(t);
+            return;
+        }
+
+        AutoTopicCreationOverride atco = new AutoTopicCreationOverride();
+        atco.allowAutoTopicCreation = lifecyclePolicies.isAutoCreateTopics();
+        internalSetAutoTopicCreation(asyncResponse, atco);
     }
 
     protected void internalClearNamespaceBacklog(AsyncResponse asyncResponse, boolean authoritative) {
