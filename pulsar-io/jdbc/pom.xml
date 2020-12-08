@@ -24,10 +24,10 @@
   <packaging>pom</packaging>
   <modules>
     <module>core</module>
-    <module>clickhouse</module>
-    <module>mariadb</module>
+    <!-- <module>clickhouse</module> -->
+    <!-- <module>mariadb</module> -->
     <module>postgres</module>
-    <module>sqlite</module>
+    <!-- <module>sqlite</module> -->
   </modules>
   <parent>
     <groupId>org.apache.pulsar</groupId>

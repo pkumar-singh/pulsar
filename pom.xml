@@ -1632,10 +1632,10 @@ flexible messaging model and an intuitive client API.</description>
         <module>pulsar-discovery-service</module>
         <module>pulsar-zookeeper-utils</module>
         <module>pulsar-testclient</module>
-        <module>pulsar-broker-auth-athenz</module>
-        <module>pulsar-client-auth-athenz</module>
+        <!-- <module>pulsar-broker-auth-athenz</module> -->
+        <!-- <module>pulsar-client-auth-athenz</module> -->
         <module>pulsar-zookeeper</module>
-        <module>pulsar-sql</module>
+        <!-- <module>pulsar-sql</module> -->
         <module>dashboard</module>
         <module>pulsar-broker-auth-sasl</module>
         <module>pulsar-client-auth-sasl</module>
@@ -1651,7 +1651,7 @@ flexible messaging model and an intuitive client API.</description>
         <module>pulsar-io</module>
 
         <!-- kafka connect avro converter shaded, because version mismatch    -->
-        <module>kafka-connect-avro-converter-shaded</module>
+        <!-- <module>kafka-connect-avro-converter-shaded</module> -->
 
         <!-- Bouncy Castle Provider loaders-->
         <module>bouncy-castle</module>

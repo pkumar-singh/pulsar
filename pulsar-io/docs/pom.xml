@@ -47,12 +47,12 @@
     </dependency>
 
     <!-- include connectors -->
-    <dependency>
+<!--     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-canal</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
+    </dependency> -->
+<!--     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-cassandra</artifactId>
       <version>${project.version}</version>
@@ -86,23 +86,23 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-jdbc-mariadb</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-jdbc-postgres</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+<!--     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-jdbc-sqlite</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-kafka</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+<!--     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-kinesis</artifactId>
       <version>${project.version}</version>
@@ -111,7 +111,7 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-rabbitmq</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>pulsar-io-twitter</artifactId>
