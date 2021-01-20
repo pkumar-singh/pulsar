@@ -902,7 +902,8 @@ public class ServerCnx extends PulsarHandler implements TransportCnx {
                         if (existingConsumerFuture != null) {
                             if (existingConsumerFuture.isDone() && !existingConsumerFuture.isCompletedExceptionally()) {
                                 Consumer consumer = existingConsumerFuture.getNow(null);
-                                log.info("[{}] Consumer with the same id is already created: consumerId={}, consumer={}",
+                                log.info("[{}] Consumer with the same id is already created:"
+                                         + " consumerId={}, consumer={}",
                                          remoteAddress, consumerId, consumer);
                                 commandSender.sendSuccessResponse(requestId);
                                 return null;
@@ -912,8 +913,8 @@ public class ServerCnx extends PulsarHandler implements TransportCnx {
                                 // client timeout is lower the broker timeouts. We need to wait until the previous
                                 // consumer
                                 // creation request either complete or fails.
-                                log.warn("[{}][{}][{}] Consumer with id is already present on the connection, consumerId={}",
-                                         remoteAddress, topicName, subscriptionName, consumerId);
+                                log.warn("[{}][{}][{}] Consumer with id is already present on the connection,"
+                                         + " consumerId={}", remoteAddress, topicName, subscriptionName, consumerId);
                                 ServerError error = null;
                                 if (!existingConsumerFuture.isDone()) {
                                     error = ServerError.ServiceNotReady;
@@ -1098,8 +1099,8 @@ public class ServerCnx extends PulsarHandler implements TransportCnx {
                         if (existingProducerFuture != null) {
                             if (existingProducerFuture.isDone() && !existingProducerFuture.isCompletedExceptionally()) {
                                 Producer producer = existingProducerFuture.getNow(null);
-                                log.info("[{}] Producer with the same id is already created: producerId={}, producer={}",
-                                         remoteAddress, producerId, producer);
+                                log.info("[{}] Producer with the same id is already created:"
+                                         + " producerId={}, producer={}", remoteAddress, producerId, producer);
                                 commandSender.sendProducerSuccessResponse(requestId, producer.getProducerName(),
                                         producer.getSchemaVersion());
 
@@ -1120,8 +1121,8 @@ public class ServerCnx extends PulsarHandler implements TransportCnx {
                                     // remove producer with producerId as it's already completed with exception
                                     producers.remove(producerId, existingProducerFuture);
                                 }
-                                log.warn("[{}][{}] Producer with id is already present on the connection, producerId={}",
-                                         remoteAddress, topicName, producerId);
+                                log.warn("[{}][{}] Producer with id is already present on the connection,"
+                                         + " producerId={}", remoteAddress, topicName, producerId);
                                 commandSender.sendErrorResponse(requestId, error,
                                                                 "Producer is already present on the connection");
 
